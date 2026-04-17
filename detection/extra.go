@@ -85,7 +85,7 @@ func GenRequestExtra(dc *DetectionContext) []byte {
 	if dc.Response != nil {
 		hasRsp = "y"
 	}
-	return MakeRequestExtra(dc.Scheme, dc.ProxyName, dc.RemoteAddr, dc.RemotePort, dc.LocalAddr, dc.LocalPort, dc.UUID, hasRsp, hasRsp, dc.ReqBeginTime)
+	return MakeRequestExtra(dc.Scheme, dc.ProxyName, dc.RemoteAddr, dc.RemotePort, dc.LocalAddr, dc.LocalPort, dc.UUID, hasRsp, "n", dc.ReqBeginTime)
 }
 
 func GenResponseExtra(dc *DetectionContext) []byte {
