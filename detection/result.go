@@ -7,6 +7,8 @@ import (
 	"strconv"
 )
 
+var eventIDRe = regexp.MustCompile(`<!--\s*event_id:\s*([a-zA-Z0-9]+)`)
+
 type ResultObjective int
 
 const (
@@ -24,6 +26,12 @@ type Result struct {
 	T1KContext  []byte
 	Cookie      []byte
 	WebLog      []byte
+	BotQuery    []byte
+	BotBody     []byte
+}
+
+func (r *Result) BotDetected() bool {
+	return len(r.BotQuery) > 0
 }
 
 func (r *Result) Passed() bool {
@@ -61,13 +69,7 @@ func (r *Result) EventID() string {
 	if extra == "" {
 		return ""
 	}
-	// <!-- event_id: e1impksyjq0gl92le6odi0fnobi270cj -->
-	re, err := regexp.Compile(`<\!--\s*event_id:\s*([a-zA-Z0-9]+)\s*-->\s*`)
-	if err != nil {
-		log.Printf("t1k compile regexp failed: %v", err)
-		return ""
-	}
-	matches := re.FindStringSubmatch(extra)
+	matches := eventIDRe.FindStringSubmatch(extra)
 	if len(matches) < 2 {
 		log.Printf("t1k regexp not match event id: %s", extra)
 		return ""

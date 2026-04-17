@@ -152,6 +152,10 @@ func readDetectionResult(r io.Reader) (*detection.Result, error) {
 			ret.Cookie = buf.Bytes()
 		case t1k.TAG_WEB_LOG:
 			ret.WebLog = buf.Bytes()
+		case t1k.TAG_BOT_QUERY:
+			ret.BotQuery = buf.Bytes()
+		case t1k.TAG_BOT_BODY:
+			ret.BotBody = buf.Bytes()
 		}
 		return nil
 	}

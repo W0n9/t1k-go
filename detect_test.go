@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/chaitin/t1k-go/detection"
+	"github.com/chaitin/t1k-go/t1k"
 
 	"github.com/chaitin/t1k-go/misc"
 )
@@ -130,5 +131,45 @@ func TestWriteDetectionRequestBodyNotEmpty(t *testing.T) {
 	expectedBody := []byte("{\"name\": \"youcai\", \"password\": \"******\"}")
 	if !bytes.Equal(body, expectedBody) {
 		t.Errorf("Expected body %s, got %s", expectedBody, body)
+	}
+}
+
+func TestReadDetectResultBotFields(t *testing.T) {
+	// Build a fake engine response with TAG_BOT_QUERY and TAG_BOT_BODY sections.
+	var buf bytes.Buffer
+	sections := []struct {
+		tag  t1k.Tag
+		data []byte
+	}{
+		{t1k.TAG_HEADER, []byte{'.'}},
+		{t1k.TAG_BOT_QUERY, []byte("bot-query-payload")},
+		{t1k.TAG_BOT_BODY, []byte("bot-body-payload")},
+	}
+	for i, s := range sections {
+		tag := s.tag
+		if i == 0 {
+			tag |= t1k.MASK_FIRST
+		}
+		if i == len(sections)-1 {
+			tag |= t1k.MASK_LAST
+		}
+		sec := t1k.MakeSimpleSection(tag, s.data)
+		if err := t1k.WriteSection(sec, &buf); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	result, err := readDetectionResult(&buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.BotDetected() {
+		t.Error("expected BotDetected true")
+	}
+	if string(result.BotQuery) != "bot-query-payload" {
+		t.Errorf("BotQuery wrong: %q", result.BotQuery)
+	}
+	if string(result.BotBody) != "bot-body-payload" {
+		t.Errorf("BotBody wrong: %q", result.BotBody)
 	}
 }
