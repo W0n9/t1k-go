@@ -2,6 +2,7 @@ package detection
 
 import (
 	"errors"
+	"net"
 	"net/http"
 
 	"github.com/chaitin/t1k-go/misc"
@@ -16,8 +17,11 @@ type DetectionContext struct {
 	RemotePort   uint16
 	LocalAddr    string
 	LocalPort    uint16
+	ServerName   string
 	ReqBeginTime int64
+	ReqEndTime   int64
 	RspBeginTime int64
+	RspEndTime   int64
 
 	T1KContext []byte
 
@@ -65,6 +69,15 @@ func MakeContextWithRequest(req *http.Request) (*DetectionContext, error) {
 		scheme = "https"
 	}
 
+	// derive ServerName: prefer TLS SNI, fall back to Host header (without port)
+	serverName := req.Host
+	if req.TLS != nil && req.TLS.ServerName != "" {
+		serverName = req.TLS.ServerName
+	}
+	if host, _, err := net.SplitHostPort(serverName); err == nil {
+		serverName = host
+	}
+
 	context := &DetectionContext{
 		UUID:         misc.GenUUID(),
 		Scheme:       scheme,
@@ -73,6 +86,7 @@ func MakeContextWithRequest(req *http.Request) (*DetectionContext, error) {
 		RemotePort:   remotePort,
 		LocalAddr:    localAddr,
 		LocalPort:    localPort,
+		ServerName:   serverName,
 		ReqBeginTime: misc.Now(),
 		Request:      wrapReq,
 		Protocol:     req.Proto,
