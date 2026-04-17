@@ -7,6 +7,7 @@ import (
 	"strconv"
 )
 
+// prefix-only match: engine appends extra fields after the ID (e.g. "TYPE: A") before -->
 var eventIDRe = regexp.MustCompile(`<!--\s*event_id:\s*([a-zA-Z0-9]+)`)
 
 type ResultObjective int
