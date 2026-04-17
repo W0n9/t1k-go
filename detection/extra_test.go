@@ -26,3 +26,15 @@ func TestGenRequestExtraHasRspIfBlock(t *testing.T) {
 		t.Errorf("expected HasRspIfBlock:n, got:\n%s", extra)
 	}
 }
+
+func TestGenRequestExtraHasRspIfBlockNoResponse(t *testing.T) {
+	dc := New()
+	// dc.Response is nil — HasRspIfOK should be "u"
+	extra := string(GenRequestExtra(dc))
+	if !strings.Contains(extra, "HasRspIfOK:u\n") {
+		t.Errorf("expected HasRspIfOK:u, got:\n%s", extra)
+	}
+	if !strings.Contains(extra, "HasRspIfBlock:n\n") {
+		t.Errorf("expected HasRspIfBlock:n even without response, got:\n%s", extra)
+	}
+}
