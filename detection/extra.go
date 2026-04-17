@@ -33,7 +33,7 @@ func MakeRequestExtra(
 		"ReqBeginTime:%d\n" +
 		"ReqEndTime:%d\n"
 
-	return []byte(fmt.Sprintf(
+	return fmt.Appendf(nil,
 		format,
 		scheme,
 		proxyName,
@@ -47,7 +47,7 @@ func MakeRequestExtra(
 		hasRspIfBlock,
 		reqBeginTime,
 		reqEndTime,
-	))
+	)
 }
 
 func MakeResponseExtra(
@@ -73,7 +73,7 @@ func MakeResponseExtra(
 		"RspBeginTime:%d\n" +
 		"RspEndTime:%d\n"
 
-	return []byte(fmt.Sprintf(
+	return fmt.Appendf(nil,
 		format,
 		scheme,
 		proxyName,
@@ -85,7 +85,7 @@ func MakeResponseExtra(
 		uuid,
 		rspBeginTime,
 		rspEndTime,
-	))
+	)
 }
 
 func PlaceholderRequestExtra(uuid string) []byte {
