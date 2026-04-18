@@ -123,6 +123,25 @@ func writeDetectionResponse(w io.Writer, rsp detection.Response) error {
 	return nil
 }
 
+// readDetectionResult parses a T1K-encoded stream from r into a detection.Result.
+// 
+// It reads sections until a section marked as last is encountered, validates that
+// the first section is marked as first, and maps recognized section tags to
+// fields on the returned Result:
+//   - TAG_HEADER: sets Result.Head and requires exactly one byte
+//   - TAG_BODY: sets Result.Body
+//   - TAG_ALOG: sets Result.Alog
+//   - TAG_EXTRA_HEADER: sets Result.ExtraHeader
+//   - TAG_EXTRA_BODY: sets Result.ExtraBody
+//   - TAG_CONTEXT: sets Result.T1KContext
+//   - TAG_COOKIE: sets Result.Cookie
+//   - TAG_WEB_LOG: sets Result.WebLog
+//   - TAG_BOT_QUERY: sets Result.BotQuery
+//   - TAG_BOT_BODY: sets Result.BotBody
+//
+// It returns a populated *detection.Result on success or a non-nil error if the
+// stream is corrupt, a required section has invalid length, or a read/parsing
+// error occurs.
 func readDetectionResult(r io.Reader) (*detection.Result, error) {
 	var ret detection.Result
 	parseSection := func(sec t1k.Section) error {

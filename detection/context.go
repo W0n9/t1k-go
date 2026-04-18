@@ -42,6 +42,7 @@ func New() *DetectionContext {
 	}
 }
 
+// The function returns an error if req is nil or if obtaining the upstream address or port fails.
 func MakeContextWithRequest(req *http.Request) (*DetectionContext, error) {
 	if req == nil {
 		return nil, errors.New("nil http.request or response")
