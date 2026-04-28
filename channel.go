@@ -25,7 +25,7 @@ type ChannelPool struct {
 }
 
 type idleConn struct {
-	conn interface{}
+	conn any
 	t    time.Time
 }
 
@@ -53,7 +53,7 @@ func NewChannelPool(poolConfig *PoolConfig) (*ChannelPool, error) {
 	}
 
 	// 初始化初始连接放入 channel 中
-	for i := 0; i < poolConfig.InitialCap; i++ {
+	for range poolConfig.InitialCap {
 		conn, err := c.factory.Factory()
 		if err != nil {
 			c.Release()
@@ -73,7 +73,7 @@ func (c *ChannelPool) getConns() chan *idleConn {
 }
 
 // Get 从pool中取一个连接
-func (c *ChannelPool) Get() (interface{}, error) {
+func (c *ChannelPool) Get() (any, error) {
 	ErrClosed := errors.New("pool is closed")
 	ErrMaxActiveConnReached := errors.New("max active connections reached")
 
@@ -148,7 +148,7 @@ func (c *ChannelPool) Get() (interface{}, error) {
 }
 
 // Put 将连接放回pool中
-func (c *ChannelPool) Put(conn interface{}) error {
+func (c *ChannelPool) Put(conn any) error {
 	if conn == nil {
 		return errors.New("connection is nil. rejecting")
 	}
@@ -191,7 +191,7 @@ func (c *ChannelPool) Put(conn interface{}) error {
 }
 
 // Close 关闭单条连接
-func (c *ChannelPool) Close(conn interface{}) error {
+func (c *ChannelPool) Close(conn any) error {
 	if conn == nil {
 		return errors.New("connection is nil. rejecting")
 	}
@@ -230,7 +230,7 @@ func (c *ChannelPool) Release() {
 }
 
 // Ping 检查单条连接是否有效
-func (c *ChannelPool) Ping(conn interface{}) error {
+func (c *ChannelPool) Ping(conn any) error {
 	if conn == nil {
 		return errors.New("connection is nil. rejecting")
 	}

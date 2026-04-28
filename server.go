@@ -1,6 +1,7 @@
 package t1k
 
 import (
+	"context"
 	"log"
 	"net"
 	"net/http"
@@ -80,7 +81,7 @@ func (s *Server) GetConn() (*conn, error) {
 	if atomic.LoadInt64(&s.count) < s.poolSize {
 		s.cntlock.Lock()
 		if s.count < s.poolSize {
-			for i := int64(0); i < (s.poolSize - s.count); i++ {
+			for range s.poolSize - s.count {
 				err = s.newConn()
 				if err != nil {
 					break
@@ -186,7 +187,8 @@ func NewFromSocketFactory(socketFactory func() (net.Conn, error)) (*Server, erro
 
 func NewWithPoolSize(addr string, poolSize int) (*Server, error) {
 	return NewFromSocketFactoryWithPoolSize(func() (net.Conn, error) {
-		return net.Dial("tcp", addr)
+		d := net.Dialer{}
+		return d.DialContext(context.Background(), "tcp", addr)
 	}, poolSize)
 }
 
@@ -196,7 +198,8 @@ func New(addr string) (*Server, error) {
 
 func NewWithPoolSizeWithTimeout(addr string, poolSize int, timeout time.Duration) (*Server, error) {
 	return NewFromSocketFactoryWithPoolSize(func() (net.Conn, error) {
-		return net.DialTimeout("tcp", addr, timeout)
+		d := net.Dialer{Timeout: timeout}
+		return d.DialContext(context.Background(), "tcp", addr)
 	}, poolSize)
 }
 

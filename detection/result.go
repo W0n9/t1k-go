@@ -56,8 +56,8 @@ func (r *Result) StatusCode() int {
 	return code
 }
 
-func (r *Result) BlockMessage() map[string]interface{} {
-	return map[string]interface{}{
+func (r *Result) BlockMessage() map[string]any {
+	return map[string]any{
 		"status":   r.StatusCode(),
 		"success":  false,
 		"message":  "blocked by Chaitin SafeLine Web Application Firewall",

@@ -32,10 +32,12 @@ type T1kHealthCheckResult struct {
 func (t1kProto *T1KProtocol) checkSingle(ctx context.Context, address string, results chan T1kHealthCheckResult) {
 	result := T1kHealthCheckResult{}
 
-	conn, err := net.Dial("tcp", address)
+	d := net.Dialer{}
+	conn, err := d.DialContext(ctx, "tcp", address)
 	if err != nil {
 		result.OK = false
 		result.Info = err.Error()
+		results <- result
 		return
 	}
 	defer conn.Close()
@@ -67,7 +69,7 @@ func (t1kProto *T1KProtocol) Check() (bool, string) {
 	defer cancel()
 
 	results := make(chan T1kHealthCheckResult, addressesNum)
-	for i := 0; i < addressesNum; i++ {
+	for i := range addressesNum {
 		go t1kProto.checkSingle(ctx, t1kProto.Addresses[i], results)
 	}
 
@@ -146,7 +148,7 @@ func (httpProto *HTTPProtocol) Check() (bool, string) {
 	defer cancel()
 
 	results := make(chan HTTPHealthCheckResult, addressesNum)
-	for i := 0; i < addressesNum; i++ {
+	for i := range addressesNum {
 		go httpProto.checkSingle(ctx, httpProto.Addresses[i], results)
 	}
 

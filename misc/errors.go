@@ -86,6 +86,6 @@ func ErrorWrap(err error, message string) error {
 }
 
 // ErrorWrapf 使用格式化字符串包装错误
-func ErrorWrapf(err error, message string, args ...interface{}) error {
+func ErrorWrapf(err error, message string, args ...any) error {
 	return wrap(err, fmt.Sprintf(message, args...), 2)
 }
