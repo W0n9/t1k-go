@@ -5,11 +5,11 @@ import "time"
 // Pool 基本方法
 type Pool interface {
 	// 获取资源
-	Get() (interface{}, error)
+	Get() (any, error)
 	// 资源放回去
-	Put(interface{}) error
+	Put(any) error
 	// 关闭资源
-	Close(interface{}) error
+	Close(any) error
 	// 释放所有资源
 	Release()
 	// 返回当前池子内有效连接数量

@@ -135,7 +135,7 @@ func readDetectionResult(r io.Reader) (*detection.Result, error) {
 		switch tag {
 		case t1k.TAG_HEADER:
 			if len(buf.Bytes()) != 1 {
-				return fmt.Errorf("len(T1K_HEADER) != 1")
+				return fmt.Errorf("len(T1K_HEADER) != 1, got %d", len(buf.Bytes()))
 			}
 			ret.Head = buf.Bytes()[0]
 		case t1k.TAG_BODY:

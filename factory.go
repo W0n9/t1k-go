@@ -1,6 +1,7 @@
 package t1k
 
 import (
+	"context"
 	"errors"
 	"net"
 	"time"
@@ -9,11 +10,11 @@ import (
 // ConnectionFactory 连接工厂
 type ConnectionFactory interface {
 	//生成连接的方法
-	Factory() (interface{}, error)
+	Factory() (any, error)
 	//关闭连接的方法
-	Close(interface{}) error
+	Close(any) error
 	//检查连接是否有效的方法
-	Ping(interface{}) error
+	Ping(any) error
 }
 
 // TcpFactory 结构体
@@ -22,8 +23,9 @@ type TcpFactory struct {
 }
 
 // Factory 方法生成 TCP 连接
-func (t *TcpFactory) Factory() (interface{}, error) {
-	conn, err := net.DialTimeout("tcp", t.Addr, 3*time.Second)
+func (t *TcpFactory) Factory() (any, error) {
+	d := net.Dialer{Timeout: 3 * time.Second}
+	conn, err := d.DialContext(context.Background(), "tcp", t.Addr)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +33,7 @@ func (t *TcpFactory) Factory() (interface{}, error) {
 }
 
 // Close 方法关闭 TCP 连接
-func (t *TcpFactory) Close(conn interface{}) error {
+func (t *TcpFactory) Close(conn any) error {
 	tcpConn, ok := conn.(net.Conn)
 	if !ok {
 		return errors.New("invalid connection type")
@@ -40,7 +42,7 @@ func (t *TcpFactory) Close(conn interface{}) error {
 }
 
 // Ping 方法检查 TCP 连接是否有效
-func (f *TcpFactory) Ping(conn interface{}) error {
+func (f *TcpFactory) Ping(conn any) error {
 	tcpConn, ok := conn.(net.Conn)
 	if !ok {
 		return errors.New("invalid connection type")
