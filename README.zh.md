@@ -175,7 +175,7 @@ rspResult, _ := server.DetectResponseInCtx(dc)
 | `StatusCode()` | `int` | 引擎返回的 HTTP 状态码（默认 403） |
 | `EventID()` | `string` | 从 `ExtraBody` 中提取的唯一事件标识符 |
 | `BotDetected()` | `bool` | `BotQuery` 非空时返回 `true` |
-| `BlockMessage()` | `map[string]interface{}` | 包含 status、message 和 event_id 的结构化拦截响应 |
+| `BlockMessage()` | `map[string]any` | 包含 status、message 和 event_id 的结构化拦截响应 |
 
 ### Result 字段
 

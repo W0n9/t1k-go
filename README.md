@@ -175,7 +175,7 @@ rspResult, _ := server.DetectResponseInCtx(dc)
 | `StatusCode()` | `int` | HTTP status code from engine response (defaults to 403) |
 | `EventID()` | `string` | Unique event identifier extracted from `ExtraBody` |
 | `BotDetected()` | `bool` | `true` if `BotQuery` is non-empty |
-| `BlockMessage()` | `map[string]interface{}` | Structured block response with status, message, and event_id |
+| `BlockMessage()` | `map[string]any` | Structured block response with status, message, and event_id |
 
 ### Result Fields
 

@@ -221,7 +221,8 @@ func TestIntegrationChannelPoolConcurrent(t *testing.T) {
 				return
 			}
 			if !result.Passed() {
-				done <- nil
+				done <- fmt.Errorf("expected normal request to pass, got blocked (head=%c)", result.Head)
+				return
 			}
 			done <- nil
 		}()
