@@ -6,12 +6,27 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/chaitin/t1k-go/detection"
 	"github.com/chaitin/t1k-go/misc"
 	"github.com/chaitin/t1k-go/t1k"
 )
+
+// PoolStats holds a snapshot of channel pool state and cumulative event counters.
+type PoolStats struct {
+	IdleConns   int
+	ActiveConns int
+	MaxActive   int
+	WaitingReqs int
+
+	DialFailed    uint64
+	IdleExpired   uint64
+	PingFailed    uint64
+	PoolFullClose uint64
+	MaxActiveHit  uint64
+}
 
 // ChannelPool 存放连接信息
 type ChannelPool struct {
@@ -22,6 +37,12 @@ type ChannelPool struct {
 	maxActive                int               // 最大连接数
 	openingConns             int               // 活跃的连接数
 	connReqs                 []chan connReq    // 连接请求缓冲区，如果无法从 conns 取到连接，则在这个缓冲区创建一个新的元素，之后连接放回去时先填充这个缓冲区
+
+	dialFailed    atomic.Uint64
+	idleExpired   atomic.Uint64
+	pingFailed    atomic.Uint64
+	poolFullClose atomic.Uint64
+	maxActiveHit  atomic.Uint64
 }
 
 type idleConn struct {
@@ -92,12 +113,14 @@ func (c *ChannelPool) Get() (interface{}, error) {
 			if timeout := c.idleTimeout; timeout > 0 {
 				if wrapConn.t.Add(timeout).Before(time.Now()) {
 					//丢弃并关闭该连接
+					c.idleExpired.Add(1)
 					_ = c.Close(wrapConn.conn)
 					continue
 				}
 			}
 			//判断是否失效，失效则丢弃，如果用户没有设定 ping 方法，就不检查
 			if err := c.Ping(wrapConn.conn); err != nil {
+				c.pingFailed.Add(1)
 				_ = c.Close(wrapConn.conn)
 				continue
 			}
@@ -108,6 +131,7 @@ func (c *ChannelPool) Get() (interface{}, error) {
 			// log.Printf("openConn %v %v", c.openingConns, c.maxActive)
 			// 判断连接数是否达到上限
 			if c.openingConns >= c.maxActive {
+				c.maxActiveHit.Add(1)
 				req := make(chan connReq, 1)
 				// 如果达到上限，则创建一个缓冲位置，等待放回去的连接
 				c.connReqs = append(c.connReqs, req)
@@ -123,6 +147,7 @@ func (c *ChannelPool) Get() (interface{}, error) {
 					if ret.idleConn.t.Add(timeout).Before(time.Now()) {
 						// 丢弃并关闭该连接
 						// 重新尝试获取连接
+						c.idleExpired.Add(1)
 						_ = c.Close(ret.idleConn.conn)
 						continue
 					}
@@ -136,6 +161,7 @@ func (c *ChannelPool) Get() (interface{}, error) {
 			}
 			conn, err := c.factory.Factory()
 			if err != nil {
+				c.dialFailed.Add(1)
 				c.mu.Unlock()
 				return nil, err
 			}
@@ -185,6 +211,7 @@ func (c *ChannelPool) Put(conn interface{}) error {
 	default:
 		//连接池已满，直接关闭该连接
 		// log.Printf("connection pool is full, close this connection")
+		c.poolFullClose.Add(1)
 		c.mu.Unlock()
 		return c.Close(conn)
 	}
@@ -241,6 +268,29 @@ func (c *ChannelPool) Ping(conn interface{}) error {
 // Len 连接池中已有的连接
 func (c *ChannelPool) Len() int {
 	return len(c.getConns())
+}
+
+// Stats returns a snapshot of pool gauges and cumulative event counters.
+func (c *ChannelPool) Stats() PoolStats {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	idleConns := 0
+	if c.conns != nil {
+		idleConns = len(c.conns)
+	}
+
+	return PoolStats{
+		IdleConns:     idleConns,
+		ActiveConns:   c.openingConns,
+		MaxActive:     c.maxActive,
+		WaitingReqs:   len(c.connReqs),
+		DialFailed:    c.dialFailed.Load(),
+		IdleExpired:   c.idleExpired.Load(),
+		PingFailed:    c.pingFailed.Load(),
+		PoolFullClose: c.poolFullClose.Load(),
+		MaxActiveHit:  c.maxActiveHit.Load(),
+	}
 }
 
 // DetectHttpRequest 检测 HTTP 请求
