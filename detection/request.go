@@ -118,7 +118,9 @@ func (r *HttpRequest) Header() ([]byte, error) {
 func (r *HttpRequest) Body() (uint32, io.ReadCloser, error) {
 	bodyBytes, err := io.ReadAll(r.req.Body)
 	if err != nil {
-		return 0, nil, err
+		// 用可识别前缀包装客户端读体错误，便于上层区分客户端断开（unexpected EOF / H2 CANCEL / H3 QUIC 等）
+		// 与引擎侧错误（readDetectionResult 的 unexpected EOF 不带此前缀）。
+		return 0, nil, misc.ErrorWrap(err, "read request body")
 	}
 	r.req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 	return uint32(len(bodyBytes)), io.NopCloser(bytes.NewReader(bodyBytes)), nil
